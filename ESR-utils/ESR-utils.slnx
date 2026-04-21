@@ -3,5 +3,5 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="ESR-utils.vcxproj" />
+  <Project Path="ESR-utils.vcxproj" Id="732ba615-c1ca-4133-958e-a6b7f45ee70f" />
 </Solution>

@@ -60,8 +60,9 @@ namespace ItemFlag
 
 namespace ESRClassId
 {
-    constexpr uint32_t CrystalCan = 1352;
-    constexpr uint32_t HoradricCube = 1123;
+    constexpr uint32_t CrystalCanFirst = 1352;
+    constexpr uint32_t CrystalCanLast = 1363;
+    constexpr uint32_t HoradricCube = 1105;
 
     constexpr uint32_t FlawedCrystalFirst = 1472;
     constexpr uint32_t FlawedCrystalLast = 1483;
@@ -77,6 +78,11 @@ namespace ESRClassId
         return (classId >= FlawedCrystalFirst && classId <= FlawedCrystalLast) ||
             (classId >= NormalCrystalFirst && classId <= NormalCrystalLast) ||
             (classId >= ChippedCrystalFirst && classId <= ChippedCrystalLast);
+    }
+
+    inline bool IsCrystalCan(uint32_t classId)
+    {
+        return classId >= CrystalCanFirst && classId <= CrystalCanLast;
     }
 }
 
