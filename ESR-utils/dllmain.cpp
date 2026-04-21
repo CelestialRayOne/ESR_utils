@@ -7,6 +7,8 @@
 #include "D2RFunctions.h"
 #include "AutoStocker.h"
 #include "BankPanelHook.h"
+#include "Config.h"
+#include "InventoryPanelHook.h"
 
 static AutoStocker g_Stocker;
 static HWND g_GameWindow = NULL;
@@ -49,13 +51,41 @@ static void StashGridToScreen(uint32_t gx, uint32_t gy, int& sx, int& sy)
 
 LRESULT CALLBACK HookedWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    if (msg == WM_KEYDOWN && wParam == 'K')
+    if (msg == WM_KEYDOWN && !(lParam & 0x40000000))
     {
-        if ((GetAsyncKeyState(VK_CONTROL) & 0x8000) && !(lParam & 0x40000000))
+        auto hk = Config::GetHotkeys();
+        auto matches = [&](const Config::Hotkey& h) -> bool
+            {
+                if (!h.IsSet()) return false;
+                if (wParam != h.vk) return false;
+                bool ctrl = (GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0;
+                bool shift = (GetAsyncKeyState(VK_SHIFT) & 0x8000) != 0;
+                bool alt = (GetAsyncKeyState(VK_MENU) & 0x8000) != 0;
+                return ctrl == h.ctrl && shift == h.shift && alt == h.alt;
+            };
+
+        if (matches(hk.storeItems))
         {
             if (!g_Stocker.IsRunning())
-                g_Stocker.Start();
-            else
+            {
+                auto flags = Config::GetFlags();
+                RunRequest req;
+                req.crystals = flags.storeCrystals;
+                req.gems = flags.storeGems;
+                req.runes = flags.storeRunes;
+                req.decals = flags.storeDecals;
+                req.multistocker = flags.storeMultistocker;
+                req.storeNonBlankCoupons = flags.storeNonBlankCoupons;
+                req.reroll = flags.storeRerollMagic || flags.storeRerollRare;
+                req.rerollMagic = flags.storeRerollMagic;
+                req.rerollRare = flags.storeRerollRare;
+                g_Stocker.Start(req);
+            }
+            return 0;
+        }
+        if (matches(hk.emergencyStop))
+        {
+            if (g_Stocker.IsRunning())
                 g_Stocker.Stop();
             return 0;
         }
@@ -95,6 +125,9 @@ void MainThread(HMODULE hModule)
     }
     printf("[ESR-utils] Functions resolved\n");
 
+    Config::Init();
+    printf("[ESR-utils] Config loaded\n");
+
     g_GameWindow = FindWindowA("OsWindow", NULL);
     if (!g_GameWindow)
     {
@@ -109,7 +142,7 @@ void MainThread(HMODULE hModule)
         return;
     }
 
-    SetTimer(g_GameWindow, 9999, 10, NULL);
+    SetTimer(g_GameWindow, 9999, 5, NULL);
 
     printf("[ESR-utils] Ready. Press Ctrl+K to test.\n");
 
@@ -125,6 +158,11 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
         printf("[ESR-utils] Warning: bank panel hook failed, stash detection disabled\n");
     else
         printf("[ESR-utils] Bank panel hook installed\n");
+
+    if (!InventoryPanelHook::Init())
+        printf("[ESR-utils] Warning: inventory panel hook failed, inventory detection disabled\n");
+    else
+        printf("[ESR-utils] Inventory panel hook installed\n");
 
     if (ul_reason_for_call == DLL_PROCESS_ATTACH)
     {

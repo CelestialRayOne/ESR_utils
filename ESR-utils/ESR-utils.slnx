@@ -1,7 +1,11 @@
 <Solution>
   <Configurations>
+    <Platform Name="Any CPU" />
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
+  <Project Path="../ESR-utils-App/ESR-utils-App.csproj" Id="429d1861-4d5d-4316-a992-919d485bef2f">
+    <Platform Solution="Debug|x64" Project="x64" />
+  </Project>
   <Project Path="ESR-utils.vcxproj" Id="732ba615-c1ca-4133-958e-a6b7f45ee70f" />
 </Solution>

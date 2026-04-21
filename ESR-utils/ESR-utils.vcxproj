@@ -148,6 +148,7 @@
   <ItemGroup>
     <ClCompile Include="AutoStocker.cpp" />
     <ClCompile Include="BankPanelHook.cpp" />
+    <ClCompile Include="Config.cpp" />
     <ClCompile Include="D2RStructs.h" />
     <ClCompile Include="dllmain.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
@@ -156,12 +157,15 @@
     <ClCompile Include="ESR-utils\minhook\src\hde\hde64.c" />
     <ClCompile Include="ESR-utils\minhook\src\hook.c" />
     <ClCompile Include="ESR-utils\minhook\src\trampoline.c" />
+    <ClCompile Include="InventoryPanelHook.cpp" />
     <ClCompile Include="Pattern.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AutoStocker.h" />
     <ClInclude Include="BankPanelHook.h" />
+    <ClInclude Include="Config.h" />
     <ClInclude Include="D2RFunctions.h" />
+    <ClInclude Include="InventoryPanelHook.h" />
     <ClInclude Include="Pattern.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

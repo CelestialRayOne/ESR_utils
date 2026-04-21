@@ -9,3 +9,7 @@ Release/
 *.obj
 *.log
 *.tlog/
+packages
+*.user
+bin/
+obj/

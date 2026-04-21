@@ -1,0 +1,78 @@
+﻿<Window x:Class="ESR_utils_App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Auto Stocker for Eastern Sun Resurrected" Height="560" Width="500"
+        Background="White" ResizeMode="CanMinimize" WindowStartupLocation="CenterScreen">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Auto Stocker for Eastern Sun Resurrected"
+                   FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,16"/>
+
+        <Grid Grid.Row="1" Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="200"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Store hotkey" VerticalAlignment="Center"/>
+            <TextBox Grid.Column="1" x:Name="TxtHotkey" IsReadOnly="True" Height="28"
+                     PreviewKeyDown="HotkeyBox_PreviewKeyDown"
+                     GotFocus="HotkeyBox_GotFocus" LostFocus="HotkeyBox_LostFocus"/>
+        </Grid>
+
+        <Grid Grid.Row="2" Margin="0,0,0,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="200"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Emergency stop hotkey" VerticalAlignment="Center"/>
+            <TextBox Grid.Column="1" x:Name="TxtEmergencyStop" IsReadOnly="True" Height="28"
+                     PreviewKeyDown="HotkeyBox_PreviewKeyDown"
+                     GotFocus="HotkeyBox_GotFocus" LostFocus="HotkeyBox_LostFocus"/>
+        </Grid>
+
+        <TextBlock Grid.Row="3" Text="What to store" FontWeight="Bold" Margin="0,0,0,8"/>
+
+        <StackPanel Grid.Row="4">
+            <CheckBox x:Name="ChkCrystals" Content="Store crystals" Margin="0,3"
+                      Checked="Flag_Changed" Unchecked="Flag_Changed"/>
+            <CheckBox x:Name="ChkGems" Content="Store gems" Margin="0,3"
+                      Checked="Flag_Changed" Unchecked="Flag_Changed"/>
+            <CheckBox x:Name="ChkRunes" Content="Store runes" Margin="0,3"
+                      Checked="Flag_Changed" Unchecked="Flag_Changed"/>
+            <CheckBox x:Name="ChkDecals" Content="Store decals" Margin="0,3"
+                      Checked="Flag_Changed" Unchecked="Flag_Changed"/>
+
+            <CheckBox x:Name="ChkReroll" Content="Store rerolling orb items" Margin="0,3"
+                    IsThreeState="True"
+                    Click="ChkReroll_Click"
+                    Checked="Reroll_Parent_Changed" Unchecked="Reroll_Parent_Changed"
+                    Indeterminate="Reroll_Parent_Changed"/>
+            <StackPanel Margin="24,0,0,0">
+                <CheckBox x:Name="ChkRerollMagic" Content="Store magic rings/amulets/jewels/charms/quivers"
+                          Margin="0,2" Checked="Reroll_Child_Changed" Unchecked="Reroll_Child_Changed"/>
+                <CheckBox x:Name="ChkRerollRare" Content="Store rare rings/amulets/jewels/charms/quivers"
+                          Margin="0,2" Checked="Reroll_Child_Changed" Unchecked="Reroll_Child_Changed"/>
+            </StackPanel>
+
+            <CheckBox x:Name="ChkMultistocker" Content="Store multistocker regeants" Margin="0,3"
+                      Checked="Flag_Changed" Unchecked="Flag_Changed"/>
+            <CheckBox x:Name="ChkNonBlankCoupons" Content="Store multistocker non-blank coupons" Margin="0,3"
+                      Checked="Flag_Changed" Unchecked="Flag_Changed"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="6" HorizontalAlignment="Center">
+            <TextBlock x:Name="TxtStatus" Text="Starting..." FontStyle="Italic"
+                       Foreground="Gray" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+            <Button Content="About" Width="80" Height="28" Click="About_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>
