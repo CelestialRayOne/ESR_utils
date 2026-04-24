@@ -9,6 +9,7 @@
 #include "BankPanelHook.h"
 #include "Config.h"
 #include "InventoryPanelHook.h"
+#include "MinHook.h"
 
 static AutoStocker g_Stocker;
 static HWND g_GameWindow = NULL;
@@ -49,6 +50,30 @@ static void StashGridToScreen(uint32_t gx, uint32_t gy, int& sx, int& sy)
     sy = static_cast<int>(ORIGIN_Y + gy * SLOT);
 }
 
+void CleanupBeforeUnload()
+{
+    if (g_Stocker.IsRunning())
+        g_Stocker.Stop();
+
+    if (g_GameWindow && g_OriginalWndProc)
+    {
+        KillTimer(g_GameWindow, 9999);
+        SetWindowLongPtrA(g_GameWindow, GWLP_WNDPROC, (LONG_PTR)g_OriginalWndProc);
+        g_OriginalWndProc = NULL;
+    }
+
+    BankPanelHook::Shutdown();
+    InventoryPanelHook::Shutdown();
+    MH_Uninitialize();
+}
+
+extern "C" __declspec(dllexport) DWORD WINAPI UnloadDll(LPVOID)
+{
+    CleanupBeforeUnload();
+    FreeLibraryAndExitThread(GetModuleHandleA("ESR-utils.dll"), 0);
+    return 0;
+}
+
 LRESULT CALLBACK HookedWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     if (msg == WM_KEYDOWN && !(lParam & 0x40000000))
@@ -76,18 +101,33 @@ LRESULT CALLBACK HookedWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
                 req.decals = flags.storeDecals;
                 req.multistocker = flags.storeMultistocker;
                 req.storeNonBlankCoupons = flags.storeNonBlankCoupons;
-                req.reroll = flags.storeRerollMagic || flags.storeRerollRare;
-                req.rerollMagic = flags.storeRerollMagic;
-                req.rerollRare = flags.storeRerollRare;
+                req.rerollMagicRings = flags.storeRerollMagicRings;
+                req.rerollMagicAmulets = flags.storeRerollMagicAmulets;
+                req.rerollMagicJewels = flags.storeRerollMagicJewels;
+                req.rerollMagicCharms = flags.storeRerollMagicCharms;
+                req.rerollMagicQuivers = flags.storeRerollMagicQuivers;
+                req.rerollRareRings = flags.storeRerollRareRings;
+                req.rerollRareAmulets = flags.storeRerollRareAmulets;
+                req.rerollRareJewels = flags.storeRerollRareJewels;
+                req.rerollRareCharms = flags.storeRerollRareCharms;
+                req.rerollRareQuivers = flags.storeRerollRareQuivers;
+                req.rerollSetUniqueRings = flags.storeRerollSetUniqueRings;
+                req.rerollSetUniqueAmulets = flags.storeRerollSetUniqueAmulets;
+                req.rerollSetUniqueQuivers = flags.storeRerollSetUniqueQuivers;
+                req.rerollSkipInventory = flags.rerollSkipInventory;
+                req.rerollSkipStash = flags.rerollSkipStash;
+                req.reroll = req.rerollMagicRings || req.rerollMagicAmulets || req.rerollMagicJewels
+                    || req.rerollMagicCharms || req.rerollMagicQuivers
+                    || req.rerollRareRings || req.rerollRareAmulets || req.rerollRareJewels
+                    || req.rerollRareCharms || req.rerollRareQuivers
+                    || req.rerollSetUniqueRings || req.rerollSetUniqueAmulets || req.rerollSetUniqueQuivers;
                 g_Stocker.Start(req);
             }
-            return 0;
         }
         if (matches(hk.emergencyStop))
         {
             if (g_Stocker.IsRunning())
                 g_Stocker.Stop();
-            return 0;
         }
     }
 
@@ -103,48 +143,38 @@ LRESULT CALLBACK HookedWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 
 void MainThread(HMODULE hModule)
 {
-    AllocConsole();
     FILE* f;
     freopen_s(&f, "CONOUT$", "w", stdout);
-
-    printf("[ESR-utils] Waiting for D2R...\n");
     Sleep(3000);
 
     uintptr_t base = reinterpret_cast<uintptr_t>(GetModuleHandleA(NULL));
     if (!base)
     {
-        printf("[ESR-utils] Failed to find D2R base\n");
         return;
     }
-    printf("[ESR-utils] D2R base: %llX\n", base);
 
     if (!D2RFunctions::Init())
     {
-        printf("[ESR-utils] Failed to init D2R functions\n");
         return;
     }
-    printf("[ESR-utils] Functions resolved\n");
 
     Config::Init();
-    printf("[ESR-utils] Config loaded\n");
+    BankPanelHook::Init();
+    InventoryPanelHook::Init();
 
     g_GameWindow = FindWindowA("OsWindow", NULL);
     if (!g_GameWindow)
     {
-        printf("[ESR-utils] Game window not found\n");
         return;
     }
 
     g_OriginalWndProc = (WNDPROC)SetWindowLongPtrA(g_GameWindow, GWLP_WNDPROC, (LONG_PTR)HookedWndProc);
     if (!g_OriginalWndProc)
     {
-        printf("[ESR-utils] Failed to hook WndProc\n");
         return;
     }
 
     SetTimer(g_GameWindow, 9999, 5, NULL);
-
-    printf("[ESR-utils] Ready. Press Ctrl+K to test.\n");
 
     while (true)
     {
@@ -154,16 +184,6 @@ void MainThread(HMODULE hModule)
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
-    if (!BankPanelHook::Init())
-        printf("[ESR-utils] Warning: bank panel hook failed, stash detection disabled\n");
-    else
-        printf("[ESR-utils] Bank panel hook installed\n");
-
-    if (!InventoryPanelHook::Init())
-        printf("[ESR-utils] Warning: inventory panel hook failed, inventory detection disabled\n");
-    else
-        printf("[ESR-utils] Inventory panel hook installed\n");
-
     if (ul_reason_for_call == DLL_PROCESS_ATTACH)
     {
         DisableThreadLibraryCalls(hModule);

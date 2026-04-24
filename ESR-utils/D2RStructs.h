@@ -88,6 +88,15 @@ namespace ESRClassId
     constexpr uint32_t RerollOrbFirst = 1417;
     constexpr uint32_t RerollOrbLast = 1432;
 
+    enum class RerollType : uint8_t
+    {
+        None = 0,
+        Ring,
+        Amulet,
+        Jewel,
+        Charm,
+        Quiver
+    };
 
     namespace Rarity
     {
@@ -126,23 +135,31 @@ namespace ESRClassId
         return false;
     }
 
-    inline bool IsRerollTargetClass(uint32_t c)
+    inline RerollType GetRerollType(uint32_t c)
     {
         switch (c)
         {
-        case 1078: case 1076: case 1262: case 1263: case 1264: case 1265:
-        case 1266: case 1267: case 1268: case 1269: case 1270: case 1271:
-        case 1272: case 1273: case 1274: case 1275: case 1276: case 1277:
-        case 1278: case 1279: case 1280: case 1281: case 1282: case 1283:
-        case 1284: case 1285: case 1286: case 1287: case 1288: case 1289:
-        case 1290: case 1291: case 1292: case 1293:
-        case 1172: case 1173: case 1174:
-        case 1459: case 1460: case 1461:
-        case 386: case 387: case 388: case 389:
+        case 1078: case 1262: case 1264: case 1265: case 1266: case 1267:
+        case 1268: case 1269: case 1270: case 1278: case 1280: case 1281:
+        case 1282: case 1283: case 1284: case 1285: case 1286:
+            return RerollType::Ring;
+        case 1076: case 1263: case 1271: case 1272: case 1273: case 1274:
+        case 1275: case 1276: case 1277: case 1279: case 1287: case 1288:
+        case 1289: case 1290: case 1291: case 1292: case 1293: case 2214:
+            return RerollType::Amulet;
         case 1212:
-            return true;
+            return RerollType::Jewel;
+        case 1172: case 1173: case 1174: case 1459: case 1460: case 1461:
+            return RerollType::Charm;
+        case 386: case 387: case 388: case 389:
+            return RerollType::Quiver;
         }
-        return false;
+        return RerollType::None;
+    }
+
+    inline bool IsRerollTargetClass(uint32_t c)
+    {
+        return GetRerollType(c) != RerollType::None;
     }
 
     constexpr uint32_t DecalStockerFirst = 2067;

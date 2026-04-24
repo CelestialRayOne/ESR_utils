@@ -31,6 +31,12 @@ namespace ESR_utils_App
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern bool CloseHandle(IntPtr handle);
 
+        [System.Runtime.InteropServices.DllImport("kernel32.dll", SetLastError = true)]
+        private static extern IntPtr LoadLibraryEx(string lpFileName, IntPtr hReservedNull, uint dwFlags);
+
+        [System.Runtime.InteropServices.DllImport("kernel32.dll")]
+        private static extern bool FreeLibrary(IntPtr hModule);
+
         private const uint PROCESS_ALL_ACCESS = 0x1F0FFF;
         private const uint MEM_COMMIT = 0x1000;
         private const uint MEM_RESERVE = 0x2000;
@@ -73,6 +79,64 @@ namespace ESR_utils_App
             }
         }
 
+        public static bool UnloadDll(int pid, out string error)
+        {
+            error = "";
+            var hProc = OpenProcess(PROCESS_ALL_ACCESS, false, pid);
+            if (hProc == IntPtr.Zero) { error = "OpenProcess failed"; return false; }
+
+            try
+            {
+                IntPtr hMod = GetRemoteModuleHandle(pid, "ESR-utils.dll");
+                if (hMod == IntPtr.Zero) { error = "DLL not loaded"; return false; }
+
+                IntPtr pUnload = GetRemoteProcAddress(hMod, "UnloadDll", pid);
+                if (pUnload == IntPtr.Zero) { error = "UnloadDll export not found"; return false; }
+
+                IntPtr hThread = CreateRemoteThread(hProc, IntPtr.Zero, 0, pUnload, IntPtr.Zero, 0, out _);
+                if (hThread == IntPtr.Zero) { error = "CreateRemoteThread failed"; return false; }
+
+                WaitForSingleObject(hThread, 5000);
+                CloseHandle(hThread);
+                return true;
+            }
+            finally
+            {
+                CloseHandle(hProc);
+            }
+        }
+
+        private static IntPtr GetRemoteModuleHandle(int pid, string moduleName)
+        {
+            var proc = System.Diagnostics.Process.GetProcessById(pid);
+            foreach (System.Diagnostics.ProcessModule m in proc.Modules)
+            {
+                if (string.Equals(m.ModuleName, moduleName, StringComparison.OrdinalIgnoreCase))
+                    return m.BaseAddress;
+            }
+            return IntPtr.Zero;
+        }
+
+        private static IntPtr GetRemoteProcAddress(IntPtr hModuleRemote, string funcName, int pid)
+        {
+            // Shortcut: kernel32's LoadLibraryA works across processes because kernel32 is at same address.
+            // Same logic: if DLL was loaded from the same path locally, the export offset is the same.
+            // So we: LoadLibrary locally, get local proc address, compute offset, apply to remote base.
+            var dllPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ESR-utils.dll");
+            IntPtr hLocal = LoadLibraryEx(dllPath, IntPtr.Zero, 0x00000001 /* DONT_RESOLVE_DLL_REFERENCES */);
+            if (hLocal == IntPtr.Zero) return IntPtr.Zero;
+            try
+            {
+                IntPtr pLocal = GetProcAddress(hLocal, funcName);
+                if (pLocal == IntPtr.Zero) return IntPtr.Zero;
+                long offset = pLocal.ToInt64() - hLocal.ToInt64();
+                return new IntPtr(hModuleRemote.ToInt64() + offset);
+            }
+            finally
+            {
+                FreeLibrary(hLocal);
+            }
+        }
         public static bool IsDllLoaded(Process proc, string dllName)
         {
             try

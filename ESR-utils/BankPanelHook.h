@@ -5,4 +5,5 @@ namespace BankPanelHook
 {
     bool Init();
     bool IsStashOpen();
+    void Shutdown();
 }

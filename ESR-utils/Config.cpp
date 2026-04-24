@@ -54,7 +54,6 @@ namespace Config
         for (int i = 1; i <= 24; i++)
         {
             char buf[8];
-            sprintf_s(buf, "F%d", i);
             if (name == buf) return VK_F1 + (i - 1);
         }
         if (name.length() == 3 && name[0] == 'D' && name[1] >= '0' && name[1] <= '9')
@@ -121,7 +120,9 @@ namespace Config
 
         Hotkeys fresh;
         fresh.storeItems = ParseHotkey(ExtractField(content, "Hotkey"));
-        fresh.emergencyStop = ParseHotkey(ExtractField(content, "EmergencyStop"));
+        std::string raw = ExtractField(content, "EmergencyStop");
+        if (raw.empty()) raw = "Escape";
+        fresh.emergencyStop = ParseHotkey(raw);
 
         std::lock_guard<std::mutex> lock(g_Mutex);
         g_Hotkeys = fresh;
@@ -133,8 +134,27 @@ namespace Config
         freshFlags.storeDecals = ExtractBool(content, "StoreDecals", true);
         freshFlags.storeMultistocker = ExtractBool(content, "StoreMultistocker", true);
         freshFlags.storeNonBlankCoupons = ExtractBool(content, "StoreNonBlankCoupons", false);
-        freshFlags.storeRerollMagic = ExtractBool(content, "StoreRerollMagic", false);
-        freshFlags.storeRerollRare = ExtractBool(content, "StoreRerollRare", false);
+
+        freshFlags.storeRerollMagicRings = ExtractBool(content, "StoreRerollMagicRings", false);
+        freshFlags.storeRerollMagicAmulets = ExtractBool(content, "StoreRerollMagicAmulets", false);
+        freshFlags.storeRerollMagicJewels = ExtractBool(content, "StoreRerollMagicJewels", false);
+        freshFlags.storeRerollMagicCharms = ExtractBool(content, "StoreRerollMagicCharms", false);
+        freshFlags.storeRerollMagicQuivers = ExtractBool(content, "StoreRerollMagicQuivers", false);
+
+        freshFlags.storeRerollRareRings = ExtractBool(content, "StoreRerollRareRings", false);
+        freshFlags.storeRerollRareAmulets = ExtractBool(content, "StoreRerollRareAmulets", false);
+        freshFlags.storeRerollRareJewels = ExtractBool(content, "StoreRerollRareJewels", false);
+        freshFlags.storeRerollRareCharms = ExtractBool(content, "StoreRerollRareCharms", false);
+        freshFlags.storeRerollRareQuivers = ExtractBool(content, "StoreRerollRareQuivers", false);
+
+        freshFlags.storeRerollSetUniqueRings = ExtractBool(content, "StoreRerollSetUniqueRings", false);
+        freshFlags.storeRerollSetUniqueAmulets = ExtractBool(content, "StoreRerollSetUniqueAmulets", false);
+        freshFlags.storeRerollSetUniqueQuivers = ExtractBool(content, "StoreRerollSetUniqueQuivers", false);
+
+        freshFlags.rerollSkipInventory = ExtractBool(content, "RerollSkipInventory", true);
+        freshFlags.rerollSkipStash = ExtractBool(content, "RerollSkipStash", false);
+        freshFlags.aspectRatio = ExtractField(content, "AspectRatio");
+        if (freshFlags.aspectRatio.empty()) freshFlags.aspectRatio = "16:9";
 
         g_Flags = freshFlags;
     }

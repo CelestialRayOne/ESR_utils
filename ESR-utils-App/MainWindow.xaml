@@ -1,7 +1,7 @@
 ﻿<Window x:Class="ESR_utils_App.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Auto Stocker for Eastern Sun Resurrected" Height="560" Width="500"
+        Title="Auto Stocker for Eastern Sun Resurrected" Height="600" Width="500"
         Background="White" ResizeMode="CanMinimize" WindowStartupLocation="CenterScreen">
     <Grid Margin="20">
         <Grid.RowDefinitions>
@@ -39,35 +39,102 @@
                      GotFocus="HotkeyBox_GotFocus" LostFocus="HotkeyBox_LostFocus"/>
         </Grid>
 
-        <TextBlock Grid.Row="3" Text="What to store" FontWeight="Bold" Margin="0,0,0,8"/>
+        <Grid Grid.Row="3" Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="What to store" FontWeight="Bold"/>
+            <TextBlock Grid.Column="1" Text="Screen resolution:" FontWeight="Bold"/>
+        </Grid>
 
-        <StackPanel Grid.Row="4">
-            <CheckBox x:Name="ChkCrystals" Content="Store crystals" Margin="0,3"
-                      Checked="Flag_Changed" Unchecked="Flag_Changed"/>
-            <CheckBox x:Name="ChkGems" Content="Store gems" Margin="0,3"
-                      Checked="Flag_Changed" Unchecked="Flag_Changed"/>
-            <CheckBox x:Name="ChkRunes" Content="Store runes" Margin="0,3"
-                      Checked="Flag_Changed" Unchecked="Flag_Changed"/>
-            <CheckBox x:Name="ChkDecals" Content="Store decals" Margin="0,3"
-                      Checked="Flag_Changed" Unchecked="Flag_Changed"/>
+        <Grid Grid.Row="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
 
-            <CheckBox x:Name="ChkReroll" Content="Store rerolling orb items" Margin="0,3"
-                    IsThreeState="True"
-                    Click="ChkReroll_Click"
-                    Checked="Reroll_Parent_Changed" Unchecked="Reroll_Parent_Changed"
-                    Indeterminate="Reroll_Parent_Changed"/>
-            <StackPanel Margin="24,0,0,0">
-                <CheckBox x:Name="ChkRerollMagic" Content="Store magic rings/amulets/jewels/charms/quivers"
-                          Margin="0,2" Checked="Reroll_Child_Changed" Unchecked="Reroll_Child_Changed"/>
-                <CheckBox x:Name="ChkRerollRare" Content="Store rare rings/amulets/jewels/charms/quivers"
-                          Margin="0,2" Checked="Reroll_Child_Changed" Unchecked="Reroll_Child_Changed"/>
+            <StackPanel Grid.Column="0">
+                <CheckBox x:Name="ChkCrystals" Content="Store crystals" Margin="0,3"
+                          Checked="Flag_Changed" Unchecked="Flag_Changed"/>
+                <CheckBox x:Name="ChkGems" Content="Store gems" Margin="0,3"
+                          Checked="Flag_Changed" Unchecked="Flag_Changed"/>
+                <CheckBox x:Name="ChkRunes" Content="Store runes" Margin="0,3"
+                          Checked="Flag_Changed" Unchecked="Flag_Changed"/>
+                <CheckBox x:Name="ChkDecals" Content="Store decals" Margin="0,3"
+                          Checked="Flag_Changed" Unchecked="Flag_Changed"/>
+
+                <CheckBox x:Name="ChkReroll" Content="Store rerolling orb items" Margin="0,3"
+                        IsThreeState="True"
+                        Click="ChkReroll_Click"
+                        Checked="Reroll_Parent_Changed" Unchecked="Reroll_Parent_Changed"
+                        Indeterminate="Reroll_Parent_Changed"/>
+                <StackPanel Margin="24,0,0,0">
+                    <Grid Margin="0,4,0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" MinWidth="90"/>
+                            <ColumnDefinition Width="Auto" MinWidth="90"/>
+                            <ColumnDefinition Width="Auto" MinWidth="90"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Magic" FontWeight="Bold"/>
+                            <CheckBox x:Name="ChkRerollMagicRings" Content="Rings" Margin="0,2"
+                      Checked="Reroll_Child_Changed" Unchecked="Reroll_Child_Changed"/>
+                            <CheckBox x:Name="ChkRerollMagicAmulets" Content="Amulets" Margin="0,2"
+                      Checked="Reroll_Child_Changed" Unchecked="Reroll_Child_Changed"/>
+                            <CheckBox x:Name="ChkRerollMagicJewels" Content="Jewels" Margin="0,2"
+                      Checked="Reroll_Child_Changed" Unchecked="Reroll_Child_Changed"/>
+                            <CheckBox x:Name="ChkRerollMagicCharms" Content="Charms" Margin="0,2"
+                      Checked="Reroll_Child_Changed" Unchecked="Reroll_Child_Changed"/>
+                            <CheckBox x:Name="ChkRerollMagicQuivers" Content="Quivers" Margin="0,2"
+                      Checked="Reroll_Child_Changed" Unchecked="Reroll_Child_Changed"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Rare" FontWeight="Bold"/>
+                            <CheckBox x:Name="ChkRerollRareRings" Content="Rings" Margin="0,2"
+                      Checked="Reroll_Child_Changed" Unchecked="Reroll_Child_Changed"/>
+                            <CheckBox x:Name="ChkRerollRareAmulets" Content="Amulets" Margin="0,2"
+                      Checked="Reroll_Child_Changed" Unchecked="Reroll_Child_Changed"/>
+                            <CheckBox x:Name="ChkRerollRareJewels" Content="Jewels" Margin="0,2"
+                      Checked="Reroll_Child_Changed" Unchecked="Reroll_Child_Changed"/>
+                            <CheckBox x:Name="ChkRerollRareCharms" Content="Charms" Margin="0,2"
+                      Checked="Reroll_Child_Changed" Unchecked="Reroll_Child_Changed"/>
+                            <CheckBox x:Name="ChkRerollRareQuivers" Content="Quivers" Margin="0,2"
+                      Checked="Reroll_Child_Changed" Unchecked="Reroll_Child_Changed"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Set/Unique" FontWeight="Bold"/>
+                            <CheckBox x:Name="ChkRerollSetUniqueRings" Content="Rings" Margin="0,2"
+                      Checked="Reroll_Child_Changed" Unchecked="Reroll_Child_Changed"/>
+                            <CheckBox x:Name="ChkRerollSetUniqueAmulets" Content="Amulets" Margin="0,2"
+                      Checked="Reroll_Child_Changed" Unchecked="Reroll_Child_Changed"/>
+                            <CheckBox x:Name="ChkRerollSetUniqueQuivers" Content="Quivers" Margin="0,2"
+                      Checked="Reroll_Child_Changed" Unchecked="Reroll_Child_Changed"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <CheckBox x:Name="ChkSkipInventory" Content="Skip inventory items" FontWeight="Bold"
+                        Margin="0,6,0,2" Checked="Flag_Changed" Unchecked="Flag_Changed"/>
+                    <CheckBox x:Name="ChkSkipStash" Content="Skip personal tab items" FontWeight="Bold"
+                        Margin="0,2" Checked="Flag_Changed" Unchecked="Flag_Changed"/>
+                </StackPanel>
+
+                <CheckBox x:Name="ChkMultistocker" Content="Store multistocker regeants" Margin="0,3"
+                          Checked="Flag_Changed" Unchecked="Flag_Changed"/>
+                <CheckBox x:Name="ChkNonBlankCoupons" Content="Store multistocker non-blank coupons" Margin="0,3"
+                          Checked="Flag_Changed" Unchecked="Flag_Changed"/>
             </StackPanel>
 
-            <CheckBox x:Name="ChkMultistocker" Content="Store multistocker regeants" Margin="0,3"
-                      Checked="Flag_Changed" Unchecked="Flag_Changed"/>
-            <CheckBox x:Name="ChkNonBlankCoupons" Content="Store multistocker non-blank coupons" Margin="0,3"
-                      Checked="Flag_Changed" Unchecked="Flag_Changed"/>
-        </StackPanel>
+            <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Top">
+                <RadioButton x:Name="Rb169" Content="16:9 (default)" GroupName="Aspect"
+                             Margin="0,2" Checked="Aspect_Changed"/>
+                <RadioButton x:Name="Rb219" Content="21:9" GroupName="Aspect"
+                             Margin="0,2" Checked="Aspect_Changed"/>
+            </StackPanel>
+        </Grid>
 
         <StackPanel Grid.Row="6" HorizontalAlignment="Center">
             <TextBlock x:Name="TxtStatus" Text="Starting..." FontStyle="Italic"

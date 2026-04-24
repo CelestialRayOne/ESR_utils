@@ -54,8 +54,24 @@ struct RunRequest
     bool multistocker = false;
     bool storeNonBlankCoupons = false;
     bool reroll = false;
-    bool rerollMagic = false;
-    bool rerollRare = false;
+    bool rerollSkipInventory = false;
+    bool rerollSkipStash = false;
+
+    bool rerollMagicRings = false;
+    bool rerollMagicAmulets = false;
+    bool rerollMagicJewels = false;
+    bool rerollMagicCharms = false;
+    bool rerollMagicQuivers = false;
+
+    bool rerollRareRings = false;
+    bool rerollRareAmulets = false;
+    bool rerollRareJewels = false;
+    bool rerollRareCharms = false;
+    bool rerollRareQuivers = false;
+
+    bool rerollSetUniqueRings = false;
+    bool rerollSetUniqueAmulets = false;
+    bool rerollSetUniqueQuivers = false;
 };
 
 class AutoStocker
@@ -72,7 +88,6 @@ public:
 
 private:
     D2UnitStrc* FindPlayerUnit();
-    void LogMessage(const char* fmt, ...);
 
     bool IsStockerClassOfType(uint32_t classId, StockerType t);
     bool IsConsumableOfType(uint32_t classId, StockerType t, bool couponsEnabled);

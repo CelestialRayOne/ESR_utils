@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <mutex>
+#include <string>
 
 namespace Config
 {
@@ -27,8 +28,26 @@ namespace Config
         bool storeDecals = true;
         bool storeMultistocker = true;
         bool storeNonBlankCoupons = false;
-        bool storeRerollMagic = false;
-        bool storeRerollRare = false;
+
+        bool storeRerollMagicRings = false;
+        bool storeRerollMagicAmulets = false;
+        bool storeRerollMagicJewels = false;
+        bool storeRerollMagicCharms = false;
+        bool storeRerollMagicQuivers = false;
+
+        bool storeRerollRareRings = false;
+        bool storeRerollRareAmulets = false;
+        bool storeRerollRareJewels = false;
+        bool storeRerollRareCharms = false;
+        bool storeRerollRareQuivers = false;
+
+        bool storeRerollSetUniqueRings = false;
+        bool storeRerollSetUniqueAmulets = false;
+        bool storeRerollSetUniqueQuivers = false;
+
+        bool rerollSkipInventory = true;
+        bool rerollSkipStash = false;
+        std::string aspectRatio = "16:9";
     };
 
     bool Init();

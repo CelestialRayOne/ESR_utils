@@ -4,6 +4,7 @@
 #include "MinHook.h"
 
 static uint64_t g_LastInvDrawTick = 0;
+static void* g_LastInvPanel = nullptr;
 
 using InvPanelDraw_t = void(__fastcall*)(void* pThis);
 static InvPanelDraw_t oInvPanelDraw = nullptr;
@@ -11,6 +12,7 @@ static InvPanelDraw_t oInvPanelDraw = nullptr;
 static void __fastcall HookedInvPanelDraw(void* pThis)
 {
     g_LastInvDrawTick = GetTickCount64();
+    g_LastInvPanel = pThis;
     oInvPanelDraw(pThis);
 }
 
@@ -24,7 +26,17 @@ bool InventoryPanelHook::Init()
     return true;
 }
 
+void InventoryPanelHook::Shutdown()
+{
+    MH_DisableHook(reinterpret_cast<void*>(Pattern::Address(0x19ABB0)));
+}
+
 bool InventoryPanelHook::IsInventoryOpen()
 {
     return (GetTickCount64() - g_LastInvDrawTick) < 200;
+}
+
+void* InventoryPanelHook::GetPanel()
+{
+    return g_LastInvPanel;
 }

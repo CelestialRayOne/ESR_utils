@@ -8,10 +8,21 @@ static uint64_t g_LastBankDrawTick = 0;
 using BankPanelDraw_t = void(__fastcall*)(void* pBankPanel);
 static BankPanelDraw_t oBankPanelDraw = nullptr;
 
-static void __fastcall HookedBankPanelDraw(void* pBankPanel)
+static void __fastcall HookedBankPanelDraw(void* pThis)
 {
     g_LastBankDrawTick = GetTickCount64();
-    oBankPanelDraw(pBankPanel);
+    __try
+    {
+        oBankPanelDraw(pThis);
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
+    }
+}
+
+void BankPanelHook::Shutdown()
+{
+    MH_DisableHook(reinterpret_cast<void*>(Pattern::Address(0x18EB90)));
 }
 
 bool BankPanelHook::Init()

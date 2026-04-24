@@ -12,6 +12,7 @@ namespace ESR_utils_App
 
         private CancellationTokenSource _cts;
         private int _lastInjectedPid = -1;
+        private bool _firstScan = true;
 
         public void Start()
         {
@@ -41,6 +42,7 @@ namespace ESR_utils_App
                             _lastInjectedPid = -1;
                             StatusChanged?.Invoke("Waiting for D2R...");
                         }
+                        _firstScan = false;
                     }
                     else
                     {
@@ -54,6 +56,25 @@ namespace ESR_utils_App
                             }
                             else
                             {
+                                bool d2rWasAlreadyRunning = _firstScan;
+                                _firstScan = false;
+
+                                try { proc.Refresh(); } catch { }
+                                if (proc.MainWindowHandle == IntPtr.Zero)
+                                {
+                                    StatusChanged?.Invoke("Waiting for D2R window...");
+                                    Thread.Sleep(2000);
+                                    continue;
+                                }
+
+                                try { proc.WaitForInputIdle(30000); } catch { }
+
+                                if (!d2rWasAlreadyRunning)
+                                {
+                                    StatusChanged?.Invoke("Waiting for D2R to stabilize...");
+                                    Thread.Sleep(10000);
+                                }
+
                                 StatusChanged?.Invoke("Injecting into D2R...");
                                 if (Injector.Inject(proc.Id, dllPath, out var err))
                                 {

@@ -2,35 +2,101 @@
 #include "BankPanelHook.h"
 #include "InventoryPanelHook.h"
 #include "Pattern.h"
+#include "Config.h"
 #include <Windows.h>
 #include <cstdio>
 #include <cstdarg>
 
+static double ScaleVirtualToPixel()
+{
+    auto flags = Config::GetFlags();
+    double w = (double)GetSystemMetrics(SM_CXSCREEN);
+    double h = (double)GetSystemMetrics(SM_CYSCREEN);
+    if (flags.aspectRatio == "21:9")
+    {
+        // Empirical: D2R scales UI so 98 virtual units = 64 pixels at 3440x1440
+        return h / 2205.0;
+    }
+    // 16:9 default
+    double sx = w / 3840.0;
+    double sy = h / 2160.0;
+    return (sx < sy) ? sx : sy;
+}
+
+static double ViewportAspect()
+{
+    auto flags = Config::GetFlags();
+    if (flags.aspectRatio == "21:9") return 2.09;  // empirical D2R cap on 21:9 displays
+    return 16.0 / 9.0;
+}
+
+static double ViewportWidth()
+{
+    double h = (double)GetSystemMetrics(SM_CYSCREEN);
+    double w = (double)GetSystemMetrics(SM_CXSCREEN);
+    double aspect = ViewportAspect();
+    double cap_w = h * aspect;
+    return (w < cap_w) ? w : cap_w;
+}
+
+static double ViewportHeight()
+{
+    double h = (double)GetSystemMetrics(SM_CYSCREEN);
+    double w = (double)GetSystemMetrics(SM_CXSCREEN);
+    double aspect = ViewportAspect();
+    double cap_h = w / aspect;
+    return (h < cap_h) ? h : cap_h;
+}
+
+static double LeftBar()
+{
+    return (GetSystemMetrics(SM_CXSCREEN) - ViewportWidth()) / 2.0;
+}
+
+static double TopBar()
+{
+    return (GetSystemMetrics(SM_CYSCREEN) - ViewportHeight()) / 2.0;
+}
+
 void InventoryGridToScreen(uint32_t gx, uint32_t gy, int& sx, int& sy)
 {
-    constexpr double SLOT = 48.8;
-    constexpr double ORIGIN_X = 1422.0;
-    constexpr double ORIGIN_Y = 438.0;
-    sx = static_cast<int>(ORIGIN_X + gx * SLOT);
-    sy = static_cast<int>(ORIGIN_Y + gy * SLOT);
+    double s = ScaleVirtualToPixel();
+    double panelX = LeftBar() + ViewportWidth() + (-1140.0 * s);
+    double panelY = TopBar() + 0.397 * ViewportHeight() + (-856.0 * s);
+    double gridX = panelX + 93.0 * s;
+    double gridY = panelY + 819.0 * s;
+    sx = static_cast<int>(gridX + gx * 98.0 * s + 49.0 * s);
+    sy = static_cast<int>(gridY + gy * 98.0 * s + 49.0 * s);
 }
 
 void StashGridToScreen(uint32_t gx, uint32_t gy, int& sx, int& sy)
 {
-    constexpr double SLOT = 49.0;
-    constexpr double ORIGIN_X = 70.0;
-    constexpr double ORIGIN_Y = 146.0;
-    sx = static_cast<int>(ORIGIN_X + gx * SLOT);
-    sy = static_cast<int>(ORIGIN_Y + gy * SLOT);
+    double s = ScaleVirtualToPixel();
+    double panelX = LeftBar() + 0.0 * s;
+    double panelY = TopBar() + 0.397 * ViewportHeight() + (-856.0 * s);
+    double gridX = panelX + 95.0 * s;
+    double gridY = panelY + 235.0 * s;
+    sx = static_cast<int>(gridX + gx * 98.0 * s + 49.0 * s);
+    sy = static_cast<int>(gridY + gy * 98.0 * s + 49.0 * s);
 }
 
 void CubeGridToScreen(uint32_t gx, uint32_t gy, int& sx, int& sy)
 {
-    constexpr double SLOT = 49.0;
-    constexpr double ORIGIN_X = 67.0;
-    constexpr double ORIGIN_Y = 119.0;
-    sx = static_cast<int>(ORIGIN_X + gx * SLOT);
-    sy = static_cast<int>(ORIGIN_Y + gy * SLOT);
+    double s = ScaleVirtualToPixel();
+    double panelX = LeftBar() + 0.0 * s;
+    double panelY = TopBar() + 0.397 * ViewportHeight() + (-856.0 * s);
+    double gridX = panelX + 80.0 * s;
+    double gridY = panelY + 193.0 * s;
+    sx = static_cast<int>(gridX + gx * 98.0 * s + 49.0 * s);
+    sy = static_cast<int>(gridY + gy * 98.0 * s + 49.0 * s);
+}
+
+void ClickStashTabButton(int tabIndex)
+{
+    double s = ScaleVirtualToPixel();
+    int x = static_cast<int>(LeftBar() + 188.0 * s + tabIndex * 196.0 * s);
+    int y = static_cast<int>(TopBar() + 196.0 * s);
+    ClickAtScreenPos(x, y);
 }
 
 void ClickAtScreenPos(int x, int y)
@@ -70,26 +136,11 @@ void PressEscape()
     SendInput(2, i, sizeof(INPUT));
 }
 
-void ClickStashTabButton(int tabIndex)
-{
-    int x = 94 + tabIndex * 98;
-    int y = 98;
-    ClickAtScreenPos(x, y);
-}
-
 bool AutoStocker::IsRunning() const
 {
     return m_State != StockerState::Idle
         && m_State != StockerState::Complete
         && m_State != StockerState::Error;
-}
-
-void AutoStocker::LogMessage(const char* fmt, ...)
-{
-    char buf[512];
-    va_list args; va_start(args, fmt);
-    vsnprintf(buf, sizeof(buf), fmt, args); va_end(args);
-    printf("[AutoStocker] %s\n", buf);
 }
 
 D2UnitStrc* AutoStocker::FindPlayerUnit()
@@ -204,9 +255,14 @@ ItemInfo AutoStocker::FindStockerOfType(StockerType t)
     auto inv = FindItemsByPage(ItemPage::Inventory);
     for (const auto& it : inv)
         if (IsStockerClassOfType(it.classId, t)) return it;
-    auto stash = FindItemsByPage(ItemPage::Stash);
-    for (const auto& it : stash)
-        if (IsStockerClassOfType(it.classId, t)) return it;
+
+    if (BankPanelHook::IsStashOpen())
+    {
+        auto stash = FindItemsByPage(ItemPage::Stash);
+        for (const auto& it : stash)
+            if (IsStockerClassOfType(it.classId, t)) return it;
+    }
+
     return { 0, 0, 0, 0 };
 }
 
@@ -232,10 +288,55 @@ std::vector<ItemInfo> AutoStocker::FindConsumablesInContext(StockerType t, uint8
                         bool accept = true;
                         if (t == StockerType::Reroll)
                         {
-                            uint32_t rarity = *reinterpret_cast<uint32_t*>(pd);
-                            bool wantMagic = m_Req.rerollMagic && rarity == ESRClassId::Rarity::Magic;
-                            bool wantRare = m_Req.rerollRare && rarity == ESRClassId::Rarity::Rare;
-                            accept = wantMagic || wantRare;
+                            if (m_Req.rerollSkipInventory && page == ItemPage::Inventory)
+                            {
+                                accept = false;
+                            }
+                            else if (m_Req.rerollSkipStash && page == ItemPage::Stash && cid == 1)
+                            {
+                                accept = false;
+                            }
+                            else
+                            {
+                                uint32_t rarity = *reinterpret_cast<uint32_t*>(pd);
+                                ESRClassId::RerollType rtype = ESRClassId::GetRerollType(unit->dwClassId);
+                                accept = false;
+
+                                if (rarity == ESRClassId::Rarity::Magic)
+                                {
+                                    switch (rtype)
+                                    {
+                                    case ESRClassId::RerollType::Ring:   accept = m_Req.rerollMagicRings; break;
+                                    case ESRClassId::RerollType::Amulet: accept = m_Req.rerollMagicAmulets; break;
+                                    case ESRClassId::RerollType::Jewel:  accept = m_Req.rerollMagicJewels; break;
+                                    case ESRClassId::RerollType::Charm:  accept = m_Req.rerollMagicCharms; break;
+                                    case ESRClassId::RerollType::Quiver: accept = m_Req.rerollMagicQuivers; break;
+                                    default: break;
+                                    }
+                                }
+                                else if (rarity == ESRClassId::Rarity::Rare)
+                                {
+                                    switch (rtype)
+                                    {
+                                    case ESRClassId::RerollType::Ring:   accept = m_Req.rerollRareRings; break;
+                                    case ESRClassId::RerollType::Amulet: accept = m_Req.rerollRareAmulets; break;
+                                    case ESRClassId::RerollType::Jewel:  accept = m_Req.rerollRareJewels; break;
+                                    case ESRClassId::RerollType::Charm:  accept = m_Req.rerollRareCharms; break;
+                                    case ESRClassId::RerollType::Quiver: accept = m_Req.rerollRareQuivers; break;
+                                    default: break;
+                                    }
+                                }
+                                else if (rarity == ESRClassId::Rarity::Set || rarity == ESRClassId::Rarity::Unique)
+                                {
+                                    switch (rtype)
+                                    {
+                                    case ESRClassId::RerollType::Ring:   accept = m_Req.rerollSetUniqueRings; break;
+                                    case ESRClassId::RerollType::Amulet: accept = m_Req.rerollSetUniqueAmulets; break;
+                                    case ESRClassId::RerollType::Quiver: accept = m_Req.rerollSetUniqueQuivers; break;
+                                    default: break;
+                                    }
+                                }
+                            }
                         }
                         if (accept)
                             result.push_back({ unit->dwUnitId, unit->dwClassId, page, cid });
@@ -250,11 +351,11 @@ std::vector<ItemInfo> AutoStocker::FindConsumablesInContext(StockerType t, uint8
 
 void AutoStocker::Start(const RunRequest& req)
 {
-    if (IsRunning()) { LogMessage("Already running"); return; }
+    if (IsRunning())
+        return;
 
     if (!InventoryPanelHook::IsInventoryOpen())
     {
-        LogMessage("Inventory is not open, abort");
         return;
     }
 
@@ -268,35 +369,30 @@ void AutoStocker::Start(const RunRequest& req)
     if (req.multistocker) m_TypeQueue.push_back(StockerType::Multistocker);
     if (req.reroll)       m_TypeQueue.push_back(StockerType::Reroll);
 
-    if (m_TypeQueue.empty()) { LogMessage("No stockers checked"); return; }
+    if (m_TypeQueue.empty())
+        return;
 
     auto cube = FindCubeInInventory();
-    if (cube.unitId == 0) { LogMessage("No cube in inventory, abort"); return; }
+    if (cube.unitId == 0)
+        return;
     m_CubeUnitId = cube.unitId;
 
     uint32_t gx = 0, gy = 0;
     if (!D2RFunctions::GetCubeGridPos(m_CubeUnitId, gx, gy))
-    {
-        LogMessage("Cannot read cube grid pos"); return;
-    }
+        return;
+
     InventoryGridToScreen(gx, gy, m_CubeClickX, m_CubeClickY);
 
     m_TypeIndex = 0;
     m_TotalStocked = 0;
     m_TickDelay = 0;
-
-    LogMessage("Starting. %d stocker type(s) queued. Cube unitId=%u at (%u,%u)",
-        (int)m_TypeQueue.size(), m_CubeUnitId, gx, gy);
     m_State = StockerState::NextStockerType;
 }
 
 void AutoStocker::Stop()
 {
     if (IsRunning())
-    {
-        LogMessage("Stopped. Total stocked=%d", m_TotalStocked);
         m_State = StockerState::Idle;
-    }
 }
 
 void AutoStocker::BeginStockerType(StockerType t)
@@ -325,7 +421,6 @@ void AutoStocker::Tick()
             break;
         }
         BeginStockerType(m_TypeQueue[m_TypeIndex]);
-        LogMessage("=== Starting %s ===", TypeName(m_CurrentType));
         m_State = StockerState::VerifyCubeEmpty;
         break;
     }
@@ -335,14 +430,12 @@ void AutoStocker::Tick()
         auto cubeItems = FindItemsByPage(ItemPage::Cube);
         if (!cubeItems.empty())
         {
-            LogMessage("Cube is not empty (%d items). Abort.", (int)cubeItems.size());
             m_State = StockerState::Error;
             break;
         }
         auto st = FindStockerOfType(m_CurrentType);
         if (st.unitId == 0)
         {
-            LogMessage("No %s stocker found, skip", TypeName(m_CurrentType));
             m_TypeIndex++;
             m_State = StockerState::NextStockerType;
             break;
@@ -358,7 +451,6 @@ void AutoStocker::Tick()
         if (!pStocker || !pStocker->pItemData) { m_State = StockerState::Error; break; }
         uint8_t page = *reinterpret_cast<uint8_t*>(reinterpret_cast<uint8_t*>(pStocker->pItemData) + 0xB8);
         uint32_t cid = *reinterpret_cast<uint32_t*>(reinterpret_cast<uint8_t*>(pStocker->pItemData) + 0x0C);
-        LogMessage("Pickup stocker %u (page=%u cid=%u)", m_StockerUnitId, page, cid);
         if (page == ItemPage::Stash && cid != 1)
             D2RFunctions::PickItemFromSharedStash(m_StockerUnitId);
         else
@@ -379,7 +471,6 @@ void AutoStocker::Tick()
         m_CurrentContainerId = 1;
         m_Consumables = FindConsumablesInContext(m_CurrentType, m_CurrentPage, m_CurrentContainerId);
         m_ConsumableIndex = 0;
-        LogMessage("Inventory consumables: %d", (int)m_Consumables.size());
         m_State = StockerState::NextConsumable;
         break;
 
@@ -397,8 +488,6 @@ void AutoStocker::Tick()
     case StockerState::PickupConsumable:
     {
         auto& c = m_Consumables[m_ConsumableIndex];
-        LogMessage("Pickup consumable %u (%d/%d) cid=%u", c.unitId,
-            m_ConsumableIndex + 1, (int)m_Consumables.size(), c.containerId);
         if (c.page == ItemPage::Stash && c.containerId != 1)
             D2RFunctions::PickItemFromSharedStash(c.unitId);
         else
@@ -441,7 +530,6 @@ void AutoStocker::Tick()
         if (m_TabIndex == -1)
         {
             m_TabIndex = 0;
-            LogMessage("Switching to Personal tab");
             ClickStashTabButton(m_TabIndex);
             m_CurrentPage = ItemPage::Stash;
             m_CurrentContainerId = 1;
@@ -454,13 +542,11 @@ void AutoStocker::Tick()
                 m_State = StockerState::EjectStocker_OpenCube;
                 break;
             }
-            LogMessage("Switching to Shared %d", m_TabIndex);
             ClickStashTabButton(m_TabIndex);
             m_CurrentPage = ItemPage::Stash;
             uint32_t base = 0;
             if (!GetSharedTabBaseId(base))
             {
-                LogMessage("Failed to read shared base, skip");
                 m_TickDelay = 5;
                 m_State = StockerState::NextTabContext;
                 break;
@@ -476,8 +562,6 @@ void AutoStocker::Tick()
     {
         m_Consumables = FindConsumablesInContext(m_CurrentType, m_CurrentPage, m_CurrentContainerId);
         m_ConsumableIndex = 0;
-        LogMessage("Tab %d: %d consumables (cid=%u)",
-            m_TabIndex, (int)m_Consumables.size(), m_CurrentContainerId);
         if (m_Consumables.empty())
             m_State = StockerState::NextTabContext;
         else
@@ -486,7 +570,6 @@ void AutoStocker::Tick()
     }
 
     case StockerState::EjectStocker_OpenCube:
-        LogMessage("Eject: right-click cube");
         RightClickAtScreenPos(m_CubeClickX, m_CubeClickY);
         m_TickDelay = 3;
         m_State = StockerState::EjectStocker_CtrlClickStocker;
@@ -496,7 +579,6 @@ void AutoStocker::Tick()
     {
         int sx, sy;
         CubeGridToScreen(15, 12, sx, sy);
-        LogMessage("Eject: ctrl-click cube slot (15,12) at (%d,%d)", sx, sy);
         CtrlClickAtScreenPos(sx, sy);
         m_TickDelay = 2;
         m_State = StockerState::EjectStocker_CloseCube;
@@ -505,14 +587,7 @@ void AutoStocker::Tick()
 
     case StockerState::EjectStocker_CloseCube:
         if (BankPanelHook::IsStashOpen())
-        {
-            LogMessage("Eject: close cube (ESC)");
             PressEscape();
-        }
-        else
-        {
-            LogMessage("Eject: stash closed, leaving cube open");
-        }
         m_TickDelay = 2;
         m_TypeIndex++;
         m_State = StockerState::WaitBetweenStockerTypes;
@@ -523,12 +598,10 @@ void AutoStocker::Tick()
         break;
 
     case StockerState::Complete:
-        LogMessage("All done. Total stocked=%d", m_TotalStocked);
         m_State = StockerState::Idle;
         break;
 
     case StockerState::Error:
-        LogMessage("Error, stopping");
         m_State = StockerState::Idle;
         break;
 

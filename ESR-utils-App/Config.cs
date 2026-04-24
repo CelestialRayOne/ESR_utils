@@ -7,14 +7,29 @@ namespace ESR_utils_App
     public class HotkeyConfig
     {
         public string Hotkey { get; set; } = "";
-        public string EmergencyStop { get; set; } = "";
-
+        public string EmergencyStop { get; set; } = "Escape";
+        public string AspectRatio { get; set; } = "16:9";
         public bool StoreCrystals { get; set; } = true;
         public bool StoreGems { get; set; } = true;
         public bool StoreRunes { get; set; } = true;
         public bool StoreDecals { get; set; } = true;
-        public bool StoreRerollMagic { get; set; } = false;
-        public bool StoreRerollRare { get; set; } = false;
+        public bool StoreRerollMagicRings { get; set; } = false;
+        public bool StoreRerollMagicAmulets { get; set; } = false;
+        public bool StoreRerollMagicJewels { get; set; } = false;
+        public bool StoreRerollMagicCharms { get; set; } = false;
+        public bool StoreRerollMagicQuivers { get; set; } = false;
+
+        public bool StoreRerollRareRings { get; set; } = false;
+        public bool StoreRerollRareAmulets { get; set; } = false;
+        public bool StoreRerollRareJewels { get; set; } = false;
+        public bool StoreRerollRareCharms { get; set; } = false;
+        public bool StoreRerollRareQuivers { get; set; } = false;
+
+        public bool StoreRerollSetUniqueRings { get; set; } = false;
+        public bool StoreRerollSetUniqueAmulets { get; set; } = false;
+        public bool StoreRerollSetUniqueQuivers { get; set; } = false;
+        public bool RerollSkipInventory { get; set; } = true;
+        public bool RerollSkipStash { get; set; } = false;
         public bool StoreMultistocker { get; set; } = true;
         public bool StoreNonBlankCoupons { get; set; } = false;
     }

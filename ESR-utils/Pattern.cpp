@@ -38,7 +38,7 @@ namespace Pattern
         return -1;
     }
 
-    uintptr_t FindPattern(uintptr_t start, size_t size, const char* pattern)
+    uintptr_t FindPattern(uintptr_t /*start*/, size_t /*size*/, const char* pattern)
     {
         const char* p = pattern;
         struct PatternByte { uint8_t value; bool wildcard; };
@@ -64,23 +64,37 @@ namespace Pattern
                 bytes[count++] = { static_cast<uint8_t>((hi << 4) | lo), false };
             }
         }
+        if (count == 0) return 0;
 
-        const uint8_t* data = reinterpret_cast<const uint8_t*>(start);
-        for (size_t i = 0; i <= size - count; i++)
+        uintptr_t base = Base();
+        auto* dos = reinterpret_cast<IMAGE_DOS_HEADER*>(base);
+        auto* nt = reinterpret_cast<IMAGE_NT_HEADERS*>(base + dos->e_lfanew);
+        auto* section = IMAGE_FIRST_SECTION(nt);
+
+        for (int s = 0; s < nt->FileHeader.NumberOfSections; s++, section++)
         {
-            bool found = true;
-            for (int j = 0; j < count; j++)
-            {
-                if (!bytes[j].wildcard && data[i + j] != bytes[j].value)
-                {
-                    found = false;
-                    break;
-                }
-            }
-            if (found)
-                return start + i;
-        }
+            if (memcmp(section->Name, ".text", 5) != 0) continue;
 
+            uintptr_t secStart = base + section->VirtualAddress;
+            size_t    secSize = section->Misc.VirtualSize;
+            if (secSize < (size_t)count) continue;
+
+            const uint8_t* data = reinterpret_cast<const uint8_t*>(secStart);
+            for (size_t i = 0; i <= secSize - count; i++)
+            {
+                bool found = true;
+                for (int j = 0; j < count; j++)
+                {
+                    if (!bytes[j].wildcard && data[i + j] != bytes[j].value)
+                    {
+                        found = false;
+                        break;
+                    }
+                }
+                if (found) return secStart + i;
+            }
+            break;
+        }
         return 0;
     }
 }
